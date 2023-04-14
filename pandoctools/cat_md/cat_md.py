@@ -39,8 +39,7 @@ def cli():
     Options:
       --help   Show this message and exit.
     """
-    if len(sys.argv) > 1:
-        if sys.argv[1].lower() == '--help':
-            print(str(cli.__doc__).replace('    ', ''))
-            return
+    if len(sys.argv) > 1 and sys.argv[1].lower() == '--help':
+        print(str(cli.__doc__).replace('    ', ''))
+        return
     sys.stdout.write(main(sys.argv[1:]))

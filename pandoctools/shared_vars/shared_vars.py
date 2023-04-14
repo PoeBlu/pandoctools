@@ -35,8 +35,7 @@ def where(executable: str, search_dirs_: Iterable[str]=None) -> str:
         kwargs = dict(path=os.pathsep.join(search_dirs_) + ((os.pathsep + path) if path else ''))
     else:
         kwargs = {}
-    exe = which(executable, **kwargs)
-    if exe:
+    if exe := which(executable, **kwargs):
         return exe
     raise PandotoolsError(
         f"'{executable}' wasn't found in the [{', '.join(search_dirs_)}] and in the $PATH.")
@@ -104,7 +103,9 @@ def is_bin_ext_maybe(output: str, to: str=None, search_dirs: Iterable[str]=None,
         err = run([pandoc, '-f', 'markdown', '--filter', panfl, '-t', ext],
                   stderr=PIPE, stdout=PIPE, input=doc.encode()).stderr
         err = err.decode() if err else ''
-        if re.search(r"(Cannot write \w+ output to terminal|specify an output file)", err):
-            return True
-        else:
-            return False
+        return bool(
+            re.search(
+                r"(Cannot write \w+ output to terminal|specify an output file)",
+                err,
+            )
+        )

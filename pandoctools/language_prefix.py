@@ -3,9 +3,8 @@ import panflute as pf
 
 # noinspection PyUnusedLocal
 def action(elem, doc):
-    if isinstance(elem, pf.Code) or isinstance(elem, pf.CodeBlock):
-        if elem.classes:
-            elem.classes[0] = 'language-' + elem.classes[0]
+    if (isinstance(elem, (pf.Code, pf.CodeBlock))) and elem.classes:
+        elem.classes[0] = f'language-{elem.classes[0]}'
 
 
 def main(doc=None):

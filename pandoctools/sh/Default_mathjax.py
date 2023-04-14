@@ -11,7 +11,7 @@ def sub():
         mathjax_url = sys.argv[2]
     except IndexError:
         mathjax_url = MJ_URL
-    rep = '<script type="text/javascript" src="{}" async></script>'.format(mathjax_url)
+    rep = f'<script type="text/javascript" src="{mathjax_url}" async></script>'
 
     sys.stdout.write(re.sub(
         r'<script type="text/javascript"[^<]+?[Mm]ath[Jj]ax.+?</script>',

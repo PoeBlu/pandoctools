@@ -21,17 +21,17 @@ exe = '.exe' if os.name == 'nt' else ''
 def get_pandoctools_bin():
     try:
         pdt = p.abspath(sys.argv[0])
-        if p.basename(pdt).lower() in ('pandoctools', 'pandoctools' + exe):
+        if p.basename(pdt).lower() in ('pandoctools', f'pandoctools{exe}'):
             if p.isfile(pdt + exe):
                 return pdt + exe
             elif p.isfile(pdt):
                 return pdt
     except IndexError:
         pass
-    pdt = p.abspath(p.join(sys.path[0], 'pandoctools' + exe))
+    pdt = p.abspath(p.join(sys.path[0], f'pandoctools{exe}'))
     if p.isfile(pdt):
         return pdt
-    pdt = p.join(sys.prefix, scripts_bin, 'pandoctools' + exe)
+    pdt = p.join(sys.prefix, scripts_bin, f'pandoctools{exe}')
     if p.isfile(pdt):
         return pdt
     raise PandotoolsError("Pandoctools executable wasn't found.")
@@ -110,8 +110,7 @@ def get_profile_path(profile: str,
             profile_path = p.join(dir_, profile)
             if p.isfile(profile_path):
                 return profile_path, True
-        else:
-            raise ValueError(f"Profile '{profile}' was not found in\n{user_dir}\nand\n{core_dir}")
+        raise ValueError(f"Profile '{profile}' was not found in\n{user_dir}\nand\n{core_dir}")
 
     profile_path = expand_pattern(profile, input_file, cwd)
     if not p.isfile(profile_path):
@@ -153,9 +152,7 @@ def guess_root_env() -> str:
     up1 = p.dirname(sys.prefix)
     up2 = p.dirname(up1)
     python_bin = p.join(up2, 'python.exe' if (os.name == 'nt') else 'bin/python')
-    if (p.basename(up1) == 'envs') and p.isfile(python_bin):
-        return up2
-    return ""
+    return up2 if (p.basename(up1) == 'envs') and p.isfile(python_bin) else ""
 
 
 def user_yes_no_query(message: str):
@@ -257,11 +254,7 @@ def pandoctools(input_file, input_file_stdin, profile, out, read, to, stdout, ye
         input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
         doc = input_stream.read()  # sys.stdin.read()
 
-        if input_file_stdin:
-            input_file = input_file_stdin
-        else:
-            input_file = 'untitled'
-
+        input_file = input_file_stdin if input_file_stdin else 'untitled'
     if stdout == '-':
         stdout = True
         out = None
@@ -324,7 +317,7 @@ def pandoctools(input_file, input_file_stdin, profile, out, read, to, stdout, ye
             return
 
     # Set environment vars to dict:
-    dic = dict()
+    dic = {}
     dic['in_ext'], dic['from'], dic['important_from'] = get_ext_and_from(input_file, read)
     dic['out_ext'], dic['to'], dic['important_to'] = get_ext_and_to(output_file, to)
     if os.name == 'nt':
@@ -332,15 +325,19 @@ def pandoctools(input_file, input_file_stdin, profile, out, read, to, stdout, ye
         dic['LANG'] = 'C.UTF-8'
     env_vars = dict(
         source=p.join(p.dirname(pandoctools_core), 'source-from-path'),
-        resolve=p.join(p.dirname(pandoctools_bin), 'pandoctools-resolve' + exe),
+        resolve=p.join(
+            p.dirname(pandoctools_bin), f'pandoctools-resolve{exe}'
+        ),
         scripts=scripts_bin,
         env_path=sys.prefix,
         input_file=input_file,
         output_file=output_file,
-        is_bin_ext_maybe=str(is_bin_ext_maybe(output_file, to, search_dirs=search_dirs)).lower(),
+        is_bin_ext_maybe=str(
+            is_bin_ext_maybe(output_file, to, search_dirs=search_dirs)
+        ).lower(),
         root_env=root_env,
         cygpath=cygpath,
-        **dic
+        **dic,
     )
 
     # convert win-paths to unix-paths if needed:
@@ -367,9 +364,14 @@ def pandoctools(input_file, input_file_stdin, profile, out, read, to, stdout, ye
 
     # run pandoctools:
     bash_cwd = None if cwd else p.dirname(input_file)
-    proc = run([bash, profile_path], stdout=PIPE, input=doc,
-               encoding='utf-8', cwd=bash_cwd,
-               env={**dict(os.environ), **env_vars})
+    proc = run(
+        [bash, profile_path],
+        stdout=PIPE,
+        input=doc,
+        encoding='utf-8',
+        cwd=bash_cwd,
+        env=os.environ | env_vars,
+    )
 
     # forward output:
     prof_stdout = proc.stdout if proc.stdout else ''
